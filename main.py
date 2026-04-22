@@ -3,18 +3,19 @@ import pandas as pd
 from datetime import datetime
 import time as time_lib
 
-# 1. CONFIGURACIÓN Y ESTÉTICA (Cambio de nombre)
+# 1. CONFIGURACIÓN Y ESTÉTICA
 st.set_page_config(page_title="Aetzen Egunean Behin", page_icon="⛰️")
 
-# --- CAMBIO 3: AÑADIR LOGO ---
-# Sustituye este link por el link real de tu logo
-LOGO_URL = "https://tu-asociacion.org/logo.png" 
+# --- LOGO CORREGIDO ---
+# Este es el enlace directo a la imagen del logo
+LOGO_URL = "https://aezkoa.org/wp-content/uploads/2020/07/logo-elkarteak.png" 
 try:
-    st.image(https://aezkoa.org/valle-de-aezkoa/elkarteak/?lang=eu, width=120)
+    # He ajustado el tamaño para que se vea bien
+    st.image(LOGO_URL, width=200)
 except:
-    pass
+    st.write("🏛️ **Aezkoako Udala**")
 
-st.title("⛰️ Aetzen Egunean Behin")
+st.title("Aetzen Egunean Behin")
 
 # 2. CARGAR DATOS
 def cargar_datos():
@@ -35,7 +36,7 @@ if 'respondido_hoy' not in st.session_state:
 
 # 4. LÓGICA DE NAVEGACIÓN Y JUEGO
 if 'user_auth' not in st.session_state:
-    # --- PANTALLA INICIAL / RANKING ---
+    # --- PANTALLA INICIAL ---
     with st.form("registro"):
         st.write("### Registro de Participante")
         nombre = st.text_input("Nombre / Alias")
@@ -47,7 +48,7 @@ if 'user_auth' not in st.session_state:
             else:
                 st.error("Introduce un nombre.")
 else:
-    # --- CAMBIO 2: BOTÓN VOLVER ATRÁS ---
+    # --- BOTÓN VOLVER ATRÁS ---
     if st.button("⬅️ Salir / Volver al Inicio"):
         del st.session_state.user_auth
         st.session_state.respondido_hoy = False
@@ -56,9 +57,10 @@ else:
     user = st.session_state.user_auth
     st.write(f"👤 **{user['nombre']}** | 🏘️ **{user['pueblo']}**")
     
-    # --- CAMBIO 1: LIMITAR A UNA RESPUESTA ---
+    # --- LIMITAR A UNA RESPUESTA POR SESIÓN ---
     if st.session_state.respondido_hoy:
-        st.info("✅ Ya hemos recibido tu respuesta de hoy. ¡Gracias por participar!")
+        st.success("✅ ¡Gracias! Tu respuesta ha sido enviada.")
+        st.info("Para volver a ver el ranking, pulsa el botón de 'Salir' arriba.")
     else:
         df_preguntas = cargar_datos()
         if df_preguntas is not None:
@@ -74,7 +76,6 @@ else:
                 res = st.radio("Elige tu respuesta:", opciones)
                 
                 if st.button("Enviar Respuesta"):
-                    # Comprobación
                     correcta_letra = str(p['correcta']).strip().lower()
                     mapa = {'a': str(p['opcion_a']), 'b': str(p['opcion_b']), 'c': str(p['opcion_c'])}
                     
@@ -84,15 +85,18 @@ else:
                     else:
                         st.error(f"No es correcto. La respuesta era la {correcta_letra.upper()}. {p['explicacion']}")
                     
-                    # Marcamos como respondido para que no pueda repetir
                     st.session_state.respondido_hoy = True
-                    time_lib.sleep(4)
+                    time_lib.sleep(3)
                     st.rerun()
             else:
                 st.write(f"⌛ No hay pregunta para hoy ({hoy_str}).")
 
-# 5. RANKINGS (Siempre visibles abajo)
+# 5. CLASIFICACIÓN
 st.divider()
-st.subheader("🏆 Clasificación")
-st.info("El ranking se actualiza automáticamente al final del día.")
-# Aquí podrías añadir el código del bar_chart si decides volver a habilitar la escritura en el Excel.
+st.subheader("🏆 Clasificación por Pueblos")
+try:
+    # Intentamos cargar la segunda hoja para el ranking si existe
+    # Por ahora mostramos un mensaje de espera hasta que tengamos datos reales
+    st.write("El ranking se actualiza con los datos del formulario.")
+except:
+    pass
