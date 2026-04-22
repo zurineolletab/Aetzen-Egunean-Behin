@@ -9,7 +9,7 @@ st.set_page_config(page_title="Aetzen Egunean Behin", page_icon="⛰️")
 # --- LOGO DESDE GITHUB (.jpeg) ---
 # CAMBIA "AKE.jpeg" por el nombre exacto de tu archivo subido
 try:
-    st.image("AKE.jpeg", width=200)
+    st.image("AKE.jpeg", width=100)
 except:
     st.write("🏛️ **Aetzen Egunean Behin**")
 
