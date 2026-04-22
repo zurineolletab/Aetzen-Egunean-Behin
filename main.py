@@ -7,14 +7,10 @@ from streamlit_gsheets import GSheetsConnection
 # 1. CONFIGURACIÓN Y ESTÉTICA
 st.set_page_config(page_title="Pirineo Cultural", page_icon="⛰️")
 
-# Intento de cargar logo (si la URL falla, no rompe la app)
-LOGO_URL = "https://tu-asociacion.org/logo.png" 
-try:
-    st.image(LOGO_URL, width=150)
-except:
-    pass
-
 st.title("⛰️ Pirineo Navarro Challenge")
+# Esta línea nos ayuda a ver si la fecha coincide
+hoy_dt = datetime.now().date()
+st.info(f"📅 Fecha que busca la App: {hoy_dt}")
 
 # 2. LÓGICA DE HORARIOS
 ahora = datetime.now()
@@ -56,17 +52,19 @@ else:
                     st.error("Introduce un nombre.")
     else:
         user = st.session_state.user_auth
+        st.write(f"Jugador: **{user['nombre']}** | Pueblo: **{user['pueblo']}**")
+        
         df_preguntas, df_puntos = cargar_datos()
         
-        # --- LÓGICA DE FECHA ULTRA-FLEXIBLE ---
-        hoy_dt = ahora.date()
-        # Convertimos la columna fecha del excel a objeto fecha real, ignore errores
-        df_preguntas['fecha_dt'] = pd.to_datetime(df_preguntas['fecha']).dt.date
+        # --- DIAGNÓSTICO: Esto nos dirá qué ve la app ---
+        df_preguntas['fecha_dt'] = pd.to_datetime(df_preguntas['fecha'], errors='coerce').dt.date
+        num_preguntas = len(df_preguntas)
+        st.write(f"🔎 He encontrado {num_preguntas} filas en tu pestaña de preguntas.")
         
         # Verificar si ya jugó hoy
         ya_jugo = False
         if not df_puntos.empty and 'usuario' in df_puntos.columns:
-            df_puntos['fecha_dt'] = pd.to_datetime(df_puntos['fecha']).dt.date
+            df_puntos['fecha_dt'] = pd.to_datetime(df_puntos['fecha'], errors='coerce').dt.date
             ya_jugo = not df_puntos[(df_puntos['usuario'] == user['nombre']) & (df_puntos['fecha_dt'] == hoy_dt)].empty
         
         if ya_jugo:
@@ -79,20 +77,21 @@ else:
                 st.divider()
                 st.markdown(f"### {p['pregunta']}")
                 
-                opciones = [str(p['opcion_a']), str(p['opcion_b']), str(p['opcion_c'])]
-                res = st.radio("Elige tu respuesta:", opciones)
+                # Aseguramos que las opciones existan
+                op_a = str(p.get('opcion_a', 'Opción A no encontrada'))
+                op_b = str(p.get('opcion_b', 'Opción B no encontrada'))
+                op_c = str(p.get('opcion_c', 'Opción C no encontrada'))
+                
+                res = st.radio("Elige tu respuesta:", [op_a, op_b, op_c])
                 
                 if st.button("Enviar Respuesta"):
-                    # Comprobamos si la respuesta coincide con la columna 'correcta'
-                    # (Funciona si pones la letra 'a' o si pones el texto exacto)
-                    correcta_raw = str(p['correcta']).strip().lower()
+                    correcta_raw = str(p.get('correcta', 'a')).strip().lower()
                     es_correcta = False
                     
-                    if correcta_raw in ['a', 'b', 'c']:
-                        col_correcta = f"opcion_{correcta_raw}"
-                        es_correcta = (res == str(p[col_correcta]))
-                    else:
-                        es_correcta = (res.lower() == correcta_raw)
+                    if correcta_raw == 'a': es_correcta = (res == op_a)
+                    elif correcta_raw == 'b': es_correcta = (res == op_b)
+                    elif correcta_raw == 'c': es_correcta = (res == op_c)
+                    else: es_correcta = (res.lower() == correcta_raw.lower())
 
                     puntos_ganados = 10 if es_correcta else 0
                     
@@ -107,15 +106,15 @@ else:
                     conn.update(worksheet="puntuaciones", data=df_actualizado)
                     
                     if es_correcta:
-                        st.success(f"¡CORRECTO! 🥳 +10 puntos. {p['explicacion']}")
+                        st.success(f"¡CORRECTO! 🥳 +10 puntos. {p.get('explicacion', '')}")
                         st.balloons()
                     else:
-                        st.error(f"¡Vaya! No es correcto. {p['explicacion']}")
+                        st.error(f"¡Vaya! No es correcto. {p.get('explicacion', '')}")
                     
                     time_lib.sleep(3)
                     st.rerun()
             else:
-                st.write("⌛ No hay pregunta programada para hoy.")
+                st.write("⌛ No hay pregunta programada para hoy en el Excel.")
 
 # 6. RANKINGS
 st.divider()
@@ -133,4 +132,4 @@ try:
     else:
         st.write("Aún no hay puntuaciones.")
 except:
-    st.write("Actualizando...")
+    pass
