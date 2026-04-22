@@ -6,14 +6,12 @@ import time as time_lib
 # 1. CONFIGURACIÓN Y ESTÉTICA
 st.set_page_config(page_title="Aetzen Egunean Behin", page_icon="⛰️")
 
-# --- LOGO CORREGIDO ---
-# Este es el enlace directo a la imagen del logo
-LOGO_URL = "https://aezkoa.org/wp-content/uploads/2020/07/logo-elkarteak.png" 
+# --- LOGO DESDE GITHUB (.jpeg) ---
+# CAMBIA "AKE.jpeg" por el nombre exacto de tu archivo subido
 try:
-    # He ajustado el tamaño para que se vea bien
-    st.image(LOGO_URL, width=200)
+    st.image("AKE.jpeg", width=200)
 except:
-    st.write("🏛️ **Aezkoako Udala**")
+    st.write("🏛️ **Aetzen Egunean Behin**")
 
 st.title("Aetzen Egunean Behin")
 
@@ -30,13 +28,11 @@ def cargar_datos():
 # 3. VARIABLES DE ESTADO
 hoy_str = datetime.now().strftime("%Y-%m-%d")
 
-# Inicializar si el usuario ya ha respondido en esta sesión
 if 'respondido_hoy' not in st.session_state:
     st.session_state.respondido_hoy = False
 
 # 4. LÓGICA DE NAVEGACIÓN Y JUEGO
 if 'user_auth' not in st.session_state:
-    # --- PANTALLA INICIAL ---
     with st.form("registro"):
         st.write("### Registro de Participante")
         nombre = st.text_input("Nombre / Alias")
@@ -48,7 +44,6 @@ if 'user_auth' not in st.session_state:
             else:
                 st.error("Introduce un nombre.")
 else:
-    # --- BOTÓN VOLVER ATRÁS ---
     if st.button("⬅️ Salir / Volver al Inicio"):
         del st.session_state.user_auth
         st.session_state.respondido_hoy = False
@@ -57,7 +52,6 @@ else:
     user = st.session_state.user_auth
     st.write(f"👤 **{user['nombre']}** | 🏘️ **{user['pueblo']}**")
     
-    # --- LIMITAR A UNA RESPUESTA POR SESIÓN ---
     if st.session_state.respondido_hoy:
         st.success("✅ ¡Gracias! Tu respuesta ha sido enviada.")
         st.info("Para volver a ver el ranking, pulsa el botón de 'Salir' arriba.")
@@ -93,10 +87,5 @@ else:
 
 # 5. CLASIFICACIÓN
 st.divider()
-st.subheader("🏆 Clasificación por Pueblos")
-try:
-    # Intentamos cargar la segunda hoja para el ranking si existe
-    # Por ahora mostramos un mensaje de espera hasta que tengamos datos reales
-    st.write("El ranking se actualiza con los datos del formulario.")
-except:
-    pass
+st.subheader("🏆 Clasificación")
+st.write("Ranking disponible próximamente.")
