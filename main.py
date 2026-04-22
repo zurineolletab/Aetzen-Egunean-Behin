@@ -29,8 +29,10 @@ from streamlit_gsheets import GSheetsConnection
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def cargar_datos():
-    preguntas = conn.read(worksheet="preguntas")
-    puntos = conn.read(worksheet="puntuaciones")
+    preguntas = conn.read(worksheet="preguntas", ttl=0)
+    preguntas.columns = preguntas.columns.str.strip().str.lower()
+    puntos = conn.read(worksheet="puntuaciones", ttl=0)
+    puntos.columns = puntos.columns.str.strip().str.lower()
     return preguntas, puntos
 
 # 5. CONTROL DE ACCESO Y JUEGO
