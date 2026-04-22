@@ -61,32 +61,37 @@ else:
         
         df_preguntas, df_puntos = cargar_datos()
         
-        # Fecha de hoy en formato texto para comparar (Asegúrate que en Excel sea igual)
+        # --- LÓGICA DE FECHA MEJORADA ---
         hoy_str = ahora.strftime("%Y-%m-%d")
+        
+        # Convertimos la columna fecha a formato texto YYYY-MM-DD para evitar fallos
+        df_preguntas['fecha_limpia'] = pd.to_datetime(df_preguntas['fecha']).dt.strftime('%Y-%m-%d')
         
         # Verificar si ya ha jugado hoy
         ya_jugo = False
         if not df_puntos.empty and 'usuario' in df_puntos.columns:
-            ya_jugo = not df_puntos[(df_puntos['usuario'] == user['nombre']) & (df_puntos['fecha'].astype(str) == hoy_str)].empty
+            # También limpiamos la fecha de puntuaciones para comparar
+            df_puntos['fecha_limpia'] = pd.to_datetime(df_puntos['fecha']).dt.strftime('%Y-%m-%d')
+            ya_jugo = not df_puntos[(df_puntos['usuario'] == user['nombre']) & (df_puntos['fecha_limpia'] == hoy_str)].empty
         
         if ya_jugo:
             st.info(f"¡Hola {user['nombre']}! Ya has participado hoy. Mira los rankings abajo.")
         else:
-            # Buscar la pregunta de hoy
-            pregunta_hoy = df_preguntas[df_preguntas['fecha'].astype(str) == hoy_str]
+            # Buscar la pregunta de hoy usando la fecha limpia
+            pregunta_hoy = df_preguntas[df_preguntas['fecha_limpia'] == hoy_str]
             
             if not pregunta_hoy.empty:
                 p = pregunta_hoy.iloc[0]
                 st.divider()
                 st.markdown(f"### {p['pregunta']}")
                 
-                opciones = [p['opcion_a'], p['opcion_b'], p['opcion_c']]
+                opciones = [str(p['opcion_a']), str(p['opcion_b']), str(p['opcion_c'])]
                 res = st.radio("Elige tu respuesta:", opciones)
                 
                 if st.button("Enviar Respuesta"):
-                    # Comprobamos la respuesta correcta (basada en la letra A, B o C en la columna 'correcta')
-                    col_correcta = f"opcion_{p['correcta'].strip().lower()}"
-                    es_correcta = (res == p[col_correcta])
+                    # Comprobamos la respuesta correcta
+                    col_correcta = f"opcion_{str(p['correcta']).strip().lower()}"
+                    es_correcta = (res == str(p[col_correcta]))
                     puntos_ganados = 10 if es_correcta else 0
                     
                     # GUARDAR EN GOOGLE SHEETS
@@ -97,7 +102,7 @@ else:
                         "puntos": puntos_ganados
                     }])
                     
-                    df_actualizado = pd.concat([df_puntos, nueva_fila], ignore_index=True)
+                    df_actualizado = pd.concat([df_puntos.drop(columns=['fecha_limpia'], errors='ignore'), nueva_fila], ignore_index=True)
                     conn.update(worksheet="puntuaciones", data=df_actualizado)
                     
                     if es_correcta:
@@ -109,7 +114,7 @@ else:
                     time_lib.sleep(3)
                     st.rerun()
             else:
-                st.write("休 No hay pregunta programada para hoy. ¡Avisa a los administradores!")
+                st.write("⌛ No hay pregunta programada para hoy. ¡Avisa a los administradores!")
 
 # 6. RANKINGS
 st.divider()
@@ -127,4 +132,4 @@ try:
     else:
         st.write("Aún no hay puntuaciones registradas. ¡Sé el primero!")
 except Exception as e:
-    st.write("Cargando rankings...")
+    st.write("Actualizando rankings...")
