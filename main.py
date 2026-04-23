@@ -44,12 +44,12 @@ hoy = datetime.now().strftime("%Y-%m-%d")
 # 4. ACCESO
 if 'user_email' not in st.session_state:
     with st.form("login"):
-        st.write("### 🔑 Registro")
+        st.write("### 🔑 Saioa hasi")
         email_in = st.text_input("Posta elektronikoa").strip().lower()
         nombre_in = st.text_input("Izena / Ezizena").strip()
         pueblo_in = st.selectbox("Herria", ["Orbaizta", "Orbara", "Aria", "Aribe", "Garralda", "Garaioa", "Hiriberri Aezkoa", "Abaurrepea", "Abaurregaina", "Auritz", "Luzaide", "Olaldea", "Oroz-Betelu", "Erroibar", "Zaraitzu", "Erronkari", "Agoitz", "Iparralde"])
         
-        if st.form_submit_button("Entrar a jugar"):
+        if st.form_submit_button("Aurrera"):
             if "@" in email_in and nombre_in:
                 df_pts = cargar_pestaña("puntuaciones")
                 ya_jugo = False
