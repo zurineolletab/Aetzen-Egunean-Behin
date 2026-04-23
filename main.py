@@ -70,7 +70,7 @@ if 'user_email' not in st.session_state:
 else:
     # CABECERA
     st.write(f"👤 **{st.session_state.get('user_nombre', 'Jugador')}** | 🏘️ **{st.session_state.get('user_pueblo', 'Aezkoa')}**")
-    if st.button("⬅️ Cerrar Sesión"):
+    if st.button("⬅️ Saioa itxi"):
         for key in list(st.session_state.keys()): del st.session_state[key]
         st.rerun()
 
