@@ -5,13 +5,23 @@ from streamlit_gsheets import GSheetsConnection
 import time as time_lib
 import os
 
-# 1. CONFIGURACIÓN Y ESTÉTICA
-st.set_page_config(page_title="Aetzen Egunean Behin", page_icon="⛰️")
+# 1. CONFIGURACIÓN (Ocultamos el icono de GitHub y el menú de Streamlit)
+st.set_page_config(
+    page_title="Aetzen Egunean Behin", 
+    page_icon="⛰️",
+    initial_sidebar_state="collapsed"
+)
 
 st.markdown("""
     <style>
+    /* OCULTAR ICONO GITHUB Y MENÚ SUPERIOR */
+    #MainMenu {visibility: hidden;}
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    
+    /* ESTÉTICA GENERAL */
     .stApp { background-color: #e8f5e9; }
-    .stButton>button { background-color: #5d9e35; color: white; font-weight: bold; border-radius: 8px; }
+    .stButton>button { background-color: #5d9e35; color: white; font-weight: bold; border-radius: 8px; width: 100%; }
     h1, h2, h3 { color: #000000 !important; }
     
     /* CUADROS DE TEXTO BLANCOS */
@@ -59,14 +69,15 @@ if 'user_email' not in st.session_state:
                         ya_jugo = True
                 
                 if ya_jugo:
-                    st.error("⚠️ Ya has participado hoy.")
+                    st.error("⚠️ Gaur jada parte hartu duzu.")
                 else:
                     st.session_state.user_email = email_in
                     st.session_state.user_nombre = nombre_in
                     st.session_state.user_pueblo = pueblo_in
+                    st.session_state.respondido = False
                     st.rerun()
             else:
-                st.error("Rellena todos los campos.")
+                st.error("Mesedez, bete eremu guztiak.")
 else:
     # CABECERA
     st.write(f"👤 **{st.session_state.get('user_nombre', 'Jugador')}** | 🏘️ **{st.session_state.get('user_pueblo', 'Aezkoa')}**")
@@ -92,9 +103,9 @@ else:
             if not st.session_state.respondido:
                 st.subheader(p['pregunta'])
                 opts = [str(p['opcion_a']), str(p['opcion_b']), str(p['opcion_c'])]
-                res = st.radio("Respuesta:", opts, index=None)
+                res = st.radio("Erantzuna:", opts, index=None)
                 
-                if st.button("Enviar"):
+                if st.button("Bidali"):
                     if res:
                         corr_letra = str(p['correcta']).strip().lower()
                         mapa = {'a': str(p['opcion_a']), 'b': str(p['opcion_b']), 'c': str(p['opcion_c'])}
@@ -106,14 +117,14 @@ else:
                         df_fin = pd.concat([df_act, nueva], ignore_index=True)
                         conn.update(worksheet="puntuaciones", data=df_fin)
                         
-                        # Marcamos como respondido para mostrar la explicación
+                        # Marcamos como respondido para mostrar la explicación fija
                         st.session_state.respondido = True
                         st.session_state.puntos_obtenidos = puntos
                         st.session_state.respuesta_correcta = mapa.get(corr_letra)
-                        st.session_state.explicacion_hoy = p.get('explicacion', '¡Gracias por participar!')
+                        st.session_state.explicacion_hoy = p.get('explicacion', 'Mila esker parte hartzeagatik!')
                         st.rerun()
                     else:
-                        st.warning("Selecciona una opción.")
+                        st.warning("Aukeratu erantzun bat.")
             
             # Si YA ha respondido, mostramos el resultado y la explicación
             else:
