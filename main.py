@@ -68,15 +68,18 @@ if 'user_email' not in st.session_state:
             else:
                 st.error("Rellena todos los campos.")
 else:
-    # CABECERA SEGURA (Sin errores de Attribute)
+    # CABECERA
     st.write(f"👤 **{st.session_state.get('user_nombre', 'Jugador')}** | 🏘️ **{st.session_state.get('user_pueblo', 'Aezkoa')}**")
-    if st.button("Cerrar Sesión"):
+    if st.button("⬅️ Cerrar Sesión"):
         for key in list(st.session_state.keys()): del st.session_state[key]
         st.rerun()
 
     st.divider()
 
-    # 5. PREGUNTA
+    # 5. PREGUNTA Y RESPUESTA
+    if 'respondido' not in st.session_state:
+        st.session_state.respondido = False
+
     df_preg = cargar_pestaña("preguntas")
     if not df_preg.empty:
         df_preg['f_dt'] = pd.to_datetime(df_preg['fecha'], errors='coerce').dt.strftime('%Y-%m-%d')
@@ -84,35 +87,49 @@ else:
 
         if not p_hoy.empty:
             p = p_hoy.iloc[0]
-            st.subheader(p['pregunta'])
-            opts = [str(p['opcion_a']), str(p['opcion_b']), str(p['opcion_c'])]
-            res = st.radio("Respuesta:", opts, index=None)
             
-            if st.button("Enviar"):
-                if res:
-                    corr_letra = str(p['correcta']).strip().lower()
-                    mapa = {'a': str(p['opcion_a']), 'b': str(p['opcion_b']), 'c': str(p['opcion_c'])}
-                    puntos = 1 if res == mapa.get(corr_letra) else 0
-                    
-                    # GUARDAR
-                    df_act = cargar_pestaña("puntuaciones")
-                    nueva = pd.DataFrame([{"fecha": hoy, "usuario": st.session_state.user_email, "nombre": st.session_state.user_nombre, "pueblo": st.session_state.user_pueblo, "puntos": puntos}])
-                    df_fin = pd.concat([df_act, nueva], ignore_index=True)
-                    conn.update(worksheet="puntuaciones", data=df_fin)
-                    
-                    if puntos == 1: 
-                        st.success("¡CORRECTO! 🥳")
-                        st.balloons()
-                    else: 
-                        st.error(f"Incorrecto. Era: {mapa.get(corr_letra)}")
-                    
-                    st.info(f"💡 **Explicación:** {p.get('explicacion', '¡Sigue así!')}")
-                    time_lib.sleep(6)
-                    st.rerun()
+            # Si NO ha respondido, mostramos la pregunta
+            if not st.session_state.respondido:
+                st.subheader(p['pregunta'])
+                opts = [str(p['opcion_a']), str(p['opcion_b']), str(p['opcion_c'])]
+                res = st.radio("Respuesta:", opts, index=None)
+                
+                if st.button("Enviar"):
+                    if res:
+                        corr_letra = str(p['correcta']).strip().lower()
+                        mapa = {'a': str(p['opcion_a']), 'b': str(p['opcion_b']), 'c': str(p['opcion_c'])}
+                        puntos = 1 if res == mapa.get(corr_letra) else 0
+                        
+                        # GUARDAR EN EXCEL
+                        df_act = cargar_pestaña("puntuaciones")
+                        nueva = pd.DataFrame([{"fecha": hoy, "usuario": st.session_state.user_email, "nombre": st.session_state.user_nombre, "pueblo": st.session_state.user_pueblo, "puntos": puntos}])
+                        df_fin = pd.concat([df_act, nueva], ignore_index=True)
+                        conn.update(worksheet="puntuaciones", data=df_fin)
+                        
+                        # Marcamos como respondido para mostrar la explicación
+                        st.session_state.respondido = True
+                        st.session_state.puntos_obtenidos = puntos
+                        st.session_state.respuesta_correcta = mapa.get(corr_letra)
+                        st.session_state.explicacion_hoy = p.get('explicacion', '¡Gracias por participar!')
+                        st.rerun()
+                    else:
+                        st.warning("Selecciona una opción.")
+            
+            # Si YA ha respondido, mostramos el resultado y la explicación
+            else:
+                if st.session_state.puntos_obtenidos == 1:
+                    st.success("¡CORRECTO! 🥳")
+                    st.balloons()
+                else:
+                    st.error(f"Incorrecto. La respuesta era: {st.session_state.respuesta_correcta}")
+                
+                st.info(f"💡 **Explicación:** {st.session_state.explicacion_hoy}")
+                st.write("Mira cómo van los rankings aquí abajo 👇")
+
         else:
             st.warning("No hay pregunta para hoy.")
 
-# 6. RANKINGS
+# 6. RANKINGS (Siempre visibles al final)
 st.divider()
 df_rk = cargar_pestaña("puntuaciones")
 if not df_rk.empty:
