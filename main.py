@@ -45,9 +45,9 @@ hoy = datetime.now().strftime("%Y-%m-%d")
 if 'user_email' not in st.session_state:
     with st.form("login"):
         st.write("### 🔑 Registro")
-        email_in = st.text_input("Correo Electrónico").strip().lower()
-        nombre_in = st.text_input("Nombre / Apodo").strip()
-        pueblo_in = st.selectbox("Tu Pueblo", ["Orbaizta", "Orbara", "Aria", "Aribe", "Garralda", "Garaioa", "Hiriberri Aezkoa", "Abaurrepea", "Abaurregaina", "Auritz", "Luzaide", "Olaldea", "Oroz-Betelu", "Erroibar", "Zaraitzu", "Erronkari", "Agoitz", "Iparralde"])
+        email_in = st.text_input("Posta elektronikoa").strip().lower()
+        nombre_in = st.text_input("Izena / Ezizena").strip()
+        pueblo_in = st.selectbox("Herria", ["Orbaizta", "Orbara", "Aria", "Aribe", "Garralda", "Garaioa", "Hiriberri Aezkoa", "Abaurrepea", "Abaurregaina", "Auritz", "Luzaide", "Olaldea", "Oroz-Betelu", "Erroibar", "Zaraitzu", "Erronkari", "Agoitz", "Iparralde"])
         
         if st.form_submit_button("Entrar a jugar"):
             if "@" in email_in and nombre_in:
@@ -118,16 +118,16 @@ else:
             # Si YA ha respondido, mostramos el resultado y la explicación
             else:
                 if st.session_state.puntos_obtenidos == 1:
-                    st.success("¡CORRECTO! 🥳")
+                    st.success("¡ERANTZUN ZUZENA! 🥳")
                     st.balloons()
                 else:
-                    st.error(f"Incorrecto. La respuesta era: {st.session_state.respuesta_correcta}")
+                    st.error(f"ERANTZUN OKERRA. Erantzun zuzena hau zen: {st.session_state.respuesta_correcta}")
                 
-                st.info(f"💡 **Explicación:** {st.session_state.explicacion_hoy}")
-                st.write("Mira cómo van los rankings aquí abajo 👇")
+                st.info(f"💡 **Azalpena:** {st.session_state.explicacion_hoy}")
+                st.write("Hemen azpian ikusgai dituzu ranking-ak 👇")
 
         else:
-            st.warning("No hay pregunta para hoy.")
+            st.warning("Gaur ez dago galderarik.")
 
 # 6. RANKINGS (Siempre visibles al final)
 st.divider()
@@ -135,8 +135,8 @@ df_rk = cargar_pestaña("puntuaciones")
 if not df_rk.empty:
     c1, c2 = st.columns(2)
     with c1:
-        st.subheader("🏆 Pueblos")
+        st.subheader("🏆 Herriak")
         st.bar_chart(df_rk.groupby('pueblo')['puntos'].sum())
     with c2:
-        st.subheader("🥇 Top Usuarios")
+        st.subheader("🥇 Top 10 partaideak")
         st.table(df_rk.groupby('nombre')['puntos'].sum().sort_values(ascending=False).head(10))
