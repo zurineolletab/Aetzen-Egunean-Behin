@@ -48,7 +48,7 @@ def cargar_pestaña(nombre):
 
 # 3. LOGO
 if os.path.exists("AKE.jpeg"):
-    st.image("AKE.jpeg", width=140)
+    st.image("AKE.jpeg", width=80)
 
 hoy = datetime.now().strftime("%Y-%m-%d")
 
