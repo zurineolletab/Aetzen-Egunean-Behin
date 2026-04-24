@@ -5,7 +5,7 @@ from streamlit_gsheets import GSheetsConnection
 import time as time_lib
 import os
 
-# 1. CONFIGURACIÓN (Ocultamos el icono de GitHub y el menú de Streamlit)
+# 1. CONFIGURACIÓN (Blindaje de seguridad y ocultación de GitHub)
 st.set_page_config(
     page_title="Aetzen Egunean Behin", 
     page_icon="⛰️",
@@ -14,10 +14,11 @@ st.set_page_config(
 
 st.markdown("""
     <style>
-    /* OCULTAR ICONO GITHUB Y MENÚ SUPERIOR */
+    /* OCULTAR ICONO GITHUB, MENÚ DE STREAMLIT Y PIE DE PÁGINA */
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
+    .viewerBadge_container__1QS13 {display: none;}
     
     /* ESTÉTICA GENERAL */
     .stApp { background-color: #e8f5e9; }
@@ -99,7 +100,6 @@ else:
         if not p_hoy.empty:
             p = p_hoy.iloc[0]
             
-            # Si NO ha respondido, mostramos la pregunta
             if not st.session_state.respondido:
                 st.subheader(p['pregunta'])
                 opts = [str(p['opcion_a']), str(p['opcion_b']), str(p['opcion_c'])]
@@ -117,7 +117,6 @@ else:
                         df_fin = pd.concat([df_act, nueva], ignore_index=True)
                         conn.update(worksheet="puntuaciones", data=df_fin)
                         
-                        # Marcamos como respondido para mostrar la explicación fija
                         st.session_state.respondido = True
                         st.session_state.puntos_obtenidos = puntos
                         st.session_state.respuesta_correcta = mapa.get(corr_letra)
@@ -125,8 +124,6 @@ else:
                         st.rerun()
                     else:
                         st.warning("Aukeratu erantzun bat.")
-            
-            # Si YA ha respondido, mostramos el resultado y la explicación
             else:
                 if st.session_state.puntos_obtenidos == 1:
                     st.success("¡ERANTZUN ZUZENA! 🥳")
@@ -136,11 +133,10 @@ else:
                 
                 st.info(f"💡 **Azalpena:** {st.session_state.explicacion_hoy}")
                 st.write("Hemen azpian ikusgai dituzu ranking-ak 👇")
-
         else:
             st.warning("Gaur ez dago galderarik.")
 
-# 6. RANKINGS (Siempre visibles al final)
+# 6. RANKINGS (Actualizado con columna de pueblo en el Top 10)
 st.divider()
 df_rk = cargar_pestaña("puntuaciones")
 if not df_rk.empty:
@@ -150,4 +146,9 @@ if not df_rk.empty:
         st.bar_chart(df_rk.groupby('pueblo')['puntos'].sum())
     with c2:
         st.subheader("🥇 Top 10 partaideak")
-        st.table(df_rk.groupby('nombre')['puntos'].sum().sort_values(ascending=False).head(10))
+        # Agrupamos por nombre y pueblo para mantener ambas columnas, sumamos puntos y ordenamos
+        rank_users = df_rk.groupby(['nombre', 'pueblo'])['puntos'].sum().reset_index()
+        rank_users = rank_users.sort_values(ascending=False, by='puntos').head(10)
+        # Renombramos columnas para que queden bonitas en la tabla
+        rank_users.columns = ['Izena', 'Herria', 'Puntuak']
+        st.table(rank_users)
